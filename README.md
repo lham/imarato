@@ -1,4 +1,8 @@
-imarato
-=======
+IMARATO - Image Region Annotation Tool
+======================================
 
-Image Region Annotation Tool, used to create region masks for an image.
+Under development.
+
+This is a program where you mask regions in an image with different colors and then save the masked regions for MATLAB files.
+
+Can be used to create training and test set for image processing.
