@@ -59,6 +59,14 @@ public class GUI extends JFrame {
 		if (imageFolderPath != null) {
 			loadImages();
 		}
+		
+		if (currentImage != null && labels != null) {
+			((JRadioButton) labelArea.getComponent(0)).setSelected(true);
+			currentImage.setActiveRegion(0);
+			imagePanel.switchCanvas();
+		}
+
+		pack();
 	}
 	
 	private void init() {
@@ -87,7 +95,6 @@ public class GUI extends JFrame {
 		
 
 		add(pane);
-		pack();
 	}
 	
 	private void setLabels() {
@@ -97,15 +104,22 @@ public class GUI extends JFrame {
 		ActionListener al = new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//TODO: Add functionality
-				System.out.println("ActionEvent received: " + e.getActionCommand());
+				if (currentImage == null) {
+					return;
+				}
+				
+				currentImage.setActiveRegion(Integer.parseInt(e.getActionCommand()));
+				imagePanel.switchCanvas();
 			}
 		};
+		
+		ColorFactory cf = new ColorFactory(0.12000102f);
 		
 		for (int i = 0; i < labels.length; i++) {
 			JRadioButton but = new JRadioButton(labels[i]);
 			but.setActionCommand(Integer.toString(i));
 			but.addActionListener(al);
+			but.setBackground(cf.nextColor());
 			labelGroup.add(but);
 			labelArea.add(but);
 		}
@@ -141,6 +155,7 @@ public class GUI extends JFrame {
 		
 		if (currentImage != null) {
 			imagePanel.setImage(currentImage);
+			setTitle("IMARATO - Image Region Annotation Tool - " + currentImage.getName());
 			return true;
 		} else {
 			return false;
@@ -281,14 +296,15 @@ public class GUI extends JFrame {
 	
 	private JComponent initPaintAllLabelsArea() {
 		JCheckBox but = new JCheckBox("Show all regions in image");
+		but.setSelected(ImagePanel.DEFAULT_PAINT_ALL);
 		but.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent ev) {
 				//TODO: Add functionality
 				if(ev.getStateChange() == ItemEvent.SELECTED){
-					System.out.println("button is selected");
+					imagePanel.setPaintAll(true);
 				} else if(ev.getStateChange() == ItemEvent.DESELECTED){
-					System.out.println("button is not selected");
+					imagePanel.setPaintAll(false);
 				}
 			}
 		});

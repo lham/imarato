@@ -2,7 +2,6 @@ package gui;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -20,19 +19,26 @@ import javax.swing.JPanel;
 import core.Image;
 
 public class ImagePanel extends JPanel {
-	public static final int DEFAULT_BRUSH_SIZE = 20;
+	private static final long serialVersionUID = 1L;
+
+	public static final int 	DEFAULT_BRUSH_SIZE	= 20;
+	public static final boolean	DEFAULT_PAINT_ALL	= false;
+	public static final float	DEFAULT_ALPHA		= 0.7f;
 	
-	Image img;
-	BufferedImage image;
-	BufferedImage layer;
-	Graphics2D g2d;
-	int currentX, currentY, oldX, oldY;
-	
-	//TODO multilayer
+	private Image img;
+	private BufferedImage image;
+	private Graphics2D g2d;
+	private int currentX, currentY, oldX, oldY;
+	private boolean paintAll;
+	private float alpha;
+	private int brushSize;
 	
 	public ImagePanel() {
 		setDoubleBuffered(false);
 		setCursor (Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		brushSize = DEFAULT_BRUSH_SIZE;
+		paintAll = DEFAULT_PAINT_ALL;
+		alpha = DEFAULT_ALPHA;
 		
 		addMouseListener(new MouseAdapter(){
 			public void mousePressed(MouseEvent e){
@@ -56,15 +62,28 @@ public class ImagePanel extends JPanel {
 			}
 
 		});
-		
-		
 	}
 	
 	public void setBrushSize(int size) {
+		this.brushSize = size;
+		
 		if (g2d != null) {
-			g2d.setStroke(new BasicStroke(size, BasicStroke.CAP_ROUND,
+			g2d.setStroke(new BasicStroke(brushSize, BasicStroke.CAP_ROUND,
 					BasicStroke.JOIN_BEVEL));
 		}
+	}
+	
+	public void switchCanvas() {
+		if (!img.getActiveRegion().hasLayer()) 
+			createLayer();
+		
+		g2d = (Graphics2D) img.getActiveRegion().getLayer().getGraphics();
+		g2d.setPaint(img.getActiveRegion().getColor());
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OUT, alpha));
+		setBrushSize(brushSize);
+		
+		repaint();
 	}
 	
 	public void setImage(Image img) {
@@ -72,15 +91,6 @@ public class ImagePanel extends JPanel {
 		
 		try {                
     		image = ImageIO.read(new File(img.getImagePath()));
-    		layer = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
-    		
-    		g2d = (Graphics2D) layer.getGraphics();
-    		g2d.setPaint(new Color(1.0f, 0.0f, 0.0f));
-    		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OUT, 0.5f));
-    		
-    		setBrushSize(DEFAULT_BRUSH_SIZE);
-    		
     	} catch (IOException ex) {
             System.out.println("Didn't find image: " + img.getImagePath());
     	}
@@ -101,9 +111,29 @@ public class ImagePanel extends JPanel {
 		super.paintComponent(g);
 		
 		if (image != null) {
-			g.drawImage(image, getX0(), getY0(), null); 
-			g.drawImage(layer, getX0(), getY0(), null);
+			g.drawImage(image, getX0(), getY0(), null);
+			
+			if (!paintAll) {
+				g.drawImage(img.getActiveRegion().getLayer(), getX0(), getY0(), null);
+			} else {
+				for (int i = 0; i < img.getNumberOfRegions(); i++) {
+					if (img.getRegion(i).hasLayer()) {
+						g.drawImage(img.getRegion(i).getLayer(), getX0(), getY0(), null);
+					}
+				}
+			}
 		}
+	}
+	
+	private void createLayer() {
+		BufferedImage layer = new BufferedImage(image.getWidth(), image.getHeight(), 
+				BufferedImage.TYPE_INT_ARGB);
+		img.getActiveRegion().setLayer(layer);
+	}
+
+	public void setPaintAll(boolean b) {
+		paintAll = b;
+		repaint();
 	}
 	
 }
