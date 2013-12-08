@@ -1,0 +1,13 @@
+water
+sky
+vegetation
+construction
+human
+house_objects
+ground
+animal
+vehicle
+mountain
+road
+floor
+fabrics
